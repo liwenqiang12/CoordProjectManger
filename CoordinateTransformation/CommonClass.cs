@@ -19,7 +19,7 @@ namespace CoordinateTransformation
            {
                if (coorSystemTable == null)
                {
-                   coorSystemTable = AccessHelper.ExecuteDataTable("select * from CoordinateSystem order by ID", null);
+                   coorSystemTable = AccessHelper.ExecuteDataTable("select * from CoordinateSystem order by id", null);
                }
                return coorSystemTable;
            }
@@ -37,7 +37,7 @@ namespace CoordinateTransformation
            {
                if (countryNameTable == null)
                {
-                   countryNameTable = AccessHelper.ExecuteDataTable("select * from CountryName order by ID", null);
+                   countryNameTable = AccessHelper.ExecuteDataTable("select * from CountryName order by  CNNAME DESC", null);
                }
                return countryNameTable;
            }

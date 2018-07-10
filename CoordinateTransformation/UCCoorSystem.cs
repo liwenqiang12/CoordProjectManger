@@ -15,10 +15,11 @@ namespace CoordinateTransformation
 {
     public partial class UCCoorSystem : UserControl
     {
+        public event PrjSelectedHandler OnPrjSelected = null;
         public UCCoorSystem()
         {
             InitializeComponent();
-            InitTreelist();
+            treeList1.ActiveFilterEnabled = true;
         }
         void InitTreelist()
         {
@@ -37,6 +38,61 @@ namespace CoordinateTransformation
             //treeList1.Columns["GRADE4"].Visible = false;
             treeList1.Columns["I_JB"].Visible = false;
             treeList1.Text = "";               
+        }
+        public void QueryCoordProject(string CountryName)
+        {
+            GetNodeVisible(treeList1.Nodes, CountryName);
+            treeList1.ExpandAll();
+        }
+        private bool GetNodeVisible(TreeListNodes nodes ,string filter)
+        {
+            bool isVisible = false;
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                TreeListNode node = nodes[i];
+                if (node.HasChildren)
+                {
+                    bool isShow = GetNodeVisible(node.Nodes , filter);
+                    node.Visible = isShow;
+                    if (isShow)
+                        isVisible = true;
+                }
+                else
+                {
+                    string NodeText = node["CountryName"].ToString();
+                    if (NodeText == filter)
+                    {
+                        node.Visible = true;
+                        isVisible = true;
+                    }
+                    else
+                        node.Visible = false;
+                }
+            }
+            return isVisible;
+        }
+        private void treeList1_FilterNode(object sender, DevExpress.XtraTreeList.FilterNodeEventArgs e)
+        {
+            string NodeText = e.Node["CountryName"].ToString();
+            bool IsVisible = NodeText== "中国";
+
+            if (IsVisible)
+            {
+                DevExpress.XtraTreeList.Nodes.TreeListNode Node = e.Node.ParentNode;
+                while (Node != null)
+                {
+                    if (!Node.Visible)
+                    {
+                        Node.Visible = true;
+                        Node = Node.ParentNode;
+                    }
+                    else
+                        break;
+                }
+            }
+
+            e.Node.Visible = IsVisible;
+            e.Handled = true;
         }
 
         private void treeList1_FocusedNodeChanged(object sender, DevExpress.XtraTreeList.FocusedNodeChangedEventArgs e)
@@ -105,6 +161,14 @@ namespace CoordinateTransformation
                     coorInfoCtrl.Text += name[i] + info[i] + "\t\n";
                 }
             }
+             CoordProjClass projClass = new CoordProjClass();
+            projClass.NAME = currNode.GetValue("NAME").ToString();
+            projClass.WKID = Convert.ToInt32( currNode.GetValue("WKID"));
+            projClass.DEFINITION = currNode.GetValue("DEFINITION").ToString();
+            if (this.OnPrjSelected != null)
+            {
+                OnPrjSelected(projClass);
+            }
 
         }
 
@@ -123,6 +187,19 @@ namespace CoordinateTransformation
             {
                 e.SelectImageIndex = 2;
             }
+        }
+
+        private void coorInfoCtrl_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void UCCoorSystem_Load(object sender, EventArgs e)
+        {
+//#if DEBUG
+//#else
+            InitTreelist();
+//#endif
         }
     }
 }

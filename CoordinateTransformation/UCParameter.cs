@@ -19,6 +19,7 @@ namespace CoordinateTransformation
         //ITable coorParaTable;
         DataTable countryNameTable;
         DataTable coorParaTable;
+        private string _countryFilter = string.Empty ;
         string[] nameArray;
         public UCParameter()
         {
@@ -39,92 +40,50 @@ namespace CoordinateTransformation
             treeState.BestFitColumns(true);        
            
 
-            //国家名称绑定值
-            countryNameTable = AccessHelper.ExecuteDataTable("select NAME from CountryName order by ENNAME ", null);
-            List<string> names = new List<string>();
-            foreach (DataRow row in countryNameTable.Rows)
-            {
-                if (!string.IsNullOrEmpty(row["NAME"].ToString()))
-                    names.Add(row["NAME"].ToString());
-            }
-            nameArray = names.ToArray();
-            countryNameCmb.Properties.Items.AddRange(nameArray);
+            ////国家名称绑定值
+            //countryNameTable = AccessHelper.ExecuteDataTable("select NAME from CountryName order by ENNAME ", null);
+            //List<string> names = new List<string>();
+            //foreach (DataRow row in countryNameTable.Rows)
+            //{
+            //    if (!string.IsNullOrEmpty(row["NAME"].ToString()))
+            //        names.Add(row["NAME"].ToString());
+            //}
+            //nameArray = names.ToArray();
+            //countryNameCmb.Properties.Items.AddRange(nameArray);
 
-            //参数类型绑定值
-            string[] typeName = { "三参", "七参", "十参" };
-            paraTypeCmb.Properties.Items.AddRange(typeName);
+            ////参数类型绑定值
+            //string[] typeName = { "三参", "七参", "十参" };
+            //paraTypeCmb.Properties.Items.AddRange(typeName);
 
             //坐标系列表绑定值
             coorParaTable = AccessHelper.ExecuteDataTable("select * from CoordinatePara", null);
             paraGridControl.DataSource = coorParaTable;
             paraCountLbl.Text = string.Format("共有{0}条记录", coorParaTable.Rows.Count);
+            this.ucCoorSystem1.OnPrjSelected += new PrjSelectedHandler(ucCoorSystem1_OnPrjSelected);
 
         }
 
-        private void countryNameCmb_EditValueChanged(object sender, EventArgs e)
+        void ucCoorSystem1_OnPrjSelected(object Project)
         {
-            countryNameCmb.Properties.Items.Clear();
-
-            if (countryNameTable == null || string.IsNullOrEmpty(countryNameCmb.Text))
-            {
-                countryNameCmb.Properties.Items.AddRange(nameArray);
-                countryNameCmb.ShowPopup();
-            }
-            else
-            {
-                DataView dt = countryNameTable.DefaultView;
-                dt.RowFilter = string.Format("NAME LIKE '%{0}%'", countryNameCmb.Text);
-                if (dt.ToTable().Rows.Count == 0)
-                {
-                    countryNameCmb.Properties.Items.AddRange(nameArray);
-                }
-                else
-                {
-                    foreach (DataRow row in dt.ToTable().Rows)
-                    {
-                        countryNameCmb.Properties.Items.Add(row["NAME"]);
-                    }
-                    countryNameCmb.ShowPopup();
-                }
-
-            }
-
+            //throw new NotImplementedException();
+            if (Project == null)
+                return;
+            CoordProjClass projClass = Project as CoordProjClass;
+            gridView1.ActiveFilterString = string.Format(" (sou_wkid = {1} or tar_wkid = {1}) ", _countryFilter  , projClass.WKID ) ;
+            paraCountLbl.Text = string.Format("共有{0}条记录", gridView1.RowCount);
         }
 
-        private void searchBtn_Click(object sender, EventArgs e)
-        {
-            Search();
-        }
         void Search()
         {
             string filter = "";
-            switch (paraTypeCmb.Text)
-            {
-                case "三参":
-                    filter = "[rz] is null and [Z0] is null ";
-                    break;
-                case "七参":
-                    filter = "[rz] is not null and [Z0] is null ";
-                    break;
-                case "十参":
-                    filter = "[rz] is not null and [Z0] is not null ";
-                    break;
-            }
-            string countryname =string.Empty;
-            if (!string.IsNullOrEmpty(countryNameCmb.Text))
-            {
-                string[] nameArray = countryNameCmb.Text.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                 countryname = countryNameCmb.Text.Replace(nameArray[nameArray.Length - 1], "").TrimEnd();
-              
-            }
-            else
-            {
+          
+            string countryname = string.Empty;
+           
                 TreeListNode treeNode = treeState.FocusedNode;
                 if (!treeNode.HasChildren)
                 {
-                    countryname = treeNode.GetValue("ENNAME").ToString();                            
-                }            
-            }
+                    countryname = treeNode.GetValue("ENNAME").ToString();
+                }
 
             if (!string.IsNullOrEmpty(countryname))
             {
@@ -134,18 +93,19 @@ namespace CoordinateTransformation
                     filter = "[AreaofUse] like '%" + countryname + "%'";
             }
             gridView1.ActiveFilterString = filter;
+            _countryFilter = filter;
             paraCountLbl.Text = string.Format("共有{0}条记录", gridView1.RowCount);
 
         }
 
-        private void resetBtn_Click(object sender, EventArgs e)
-        {
-            countryNameCmb.Text = "";
-            countryNameCmb.ClosePopup();
-            paraTypeCmb.Text = "";
-            gridView1.ActiveFilterString = null;
-            paraCountLbl.Text = string.Format("共有{0}条记录", gridView1.RowCount);
-        }
+        //private void resetBtn_Click(object sender, EventArgs e)
+        //{
+        //    countryNameCmb.Text = "";
+        //    countryNameCmb.ClosePopup();
+        //    paraTypeCmb.Text = "";
+        //    gridView1.ActiveFilterString = null;
+        //    paraCountLbl.Text = string.Format("共有{0}条记录", gridView1.RowCount);
+        //}
 
         private void addBtn_Click(object sender, EventArgs e)
         {
@@ -203,9 +163,12 @@ namespace CoordinateTransformation
             TreeListNode currNode = treeState.FocusedNode;
             if (currNode == null || currNode.HasChildren) return;
 
-            string enName = currNode.GetValue("ENNAME").ToString();
-            gridView1.ActiveFilterString = "[AreaofUse] like '%" + enName + "%'";
-            paraCountLbl.Text = string.Format("共有{0}条记录", gridView1.RowCount);
+            //string enName = currNode.GetValue("ENNAME").ToString();
+            //gridView1.ActiveFilterString = "[AreaofUse] like '%" + enName + "%'";
+            //paraCountLbl.Text = string.Format("共有{0}条记录", gridView1.RowCount);
+
+            string cnName = currNode.GetValue("CNNAME").ToString();
+            this.ucCoorSystem1.QueryCoordProject( cnName );
         }
 
         private void treeState_CustomDrawNodeImages(object sender, DevExpress.XtraTreeList.CustomDrawNodeImagesEventArgs e)
@@ -226,6 +189,16 @@ namespace CoordinateTransformation
             FrmPosPair frm = new FrmPosPair();
             frm.WKID = Convert.ToInt32( datarow["WKID"] );
             frm.ShowDialog(this);
+        }
+
+        private void paraGridControl_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ucCoorSystem1_Load(object sender, EventArgs e)
+        {
+
         }
 
     }

@@ -20,41 +20,15 @@ namespace CoordinateTransformation
         }
         void Init()
         { 
-           UCCoorSystem ucCoorSystem= new UCCoorSystem();
-           ucCoorSystem.Dock = DockStyle.Fill;
-           panelCtrl.Controls.Add(ucCoorSystem);    
+           UCParameter ucParameter = new UCParameter();
+           ucParameter.Dock = DockStyle.Fill;
+           panelCtrl.Controls.Add(ucParameter);   
                     
         }
 
-        private void coordBtn_Click(object sender, EventArgs e)
-        {
-            if ((panelCtrl.Controls[0] as UCCoorSystem) != null) return;
-            panelCtrl.Controls.Clear();
-            UCCoorSystem ucCoorSystem = new UCCoorSystem();
-            ucCoorSystem.Dock = DockStyle.Fill;
-            panelCtrl.Controls.Add(ucCoorSystem);   
-        }
+     
 
-        private void paraBtn_Click(object sender, EventArgs e)
-        {
-          
-            if ((panelCtrl.Controls[0] as UCParameter) != null) return;
-            panelCtrl.Controls.Clear();
-            UCParameter ucParameter = new UCParameter();
-            ucParameter.Dock = DockStyle.Fill;
-            panelCtrl.Controls.Add(ucParameter);   
-        }
-
-   
-
-        private void coordTranBtn_Click(object sender, EventArgs e)
-        {
-            if ((panelCtrl.Controls[0] as UCCoordTran) != null) return;
-            panelCtrl.Controls.Clear();
-            UCCoordTran ucCoordTran = new UCCoordTran();
-            ucCoordTran.Dock = DockStyle.Fill;
-            panelCtrl.Controls.Add(ucCoordTran);   
-        }
+      
 
         private void lblnkCoord_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
@@ -65,10 +39,7 @@ namespace CoordinateTransformation
             panelCtrl.Controls.Add(ucCoorSystem);   
         }
 
-        private void lblnkPara_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            this.mnuTrancPara.ShowPopup(PointToScreen(new Point(lblnkPara.Location.X, lblnkPara.Bottom + 2)));
-        }
+
 
         private void lblnkCalcPara_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
@@ -104,8 +75,12 @@ namespace CoordinateTransformation
                 frm.WindowState = FormWindowState.Normal;
             }
         }
-
-        private void barbtnParamTranc_ItemClick(object sender, DevExpress.XtraBars.ItemClickEventArgs e)
+        /// <summary>
+        /// 参数转换
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void lnklblParaTranc_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             if ((panelCtrl.Controls[0] as UCParameter) != null) return;
             panelCtrl.Controls.Clear();
@@ -113,8 +88,12 @@ namespace CoordinateTransformation
             ucParameter.Dock = DockStyle.Fill;
             panelCtrl.Controls.Add(ucParameter);   
         }
-
-        private void barbtnFrameTranc_ItemClick(object sender, DevExpress.XtraBars.ItemClickEventArgs e)
+       /// <summary>
+       /// 框架转换
+       /// </summary>
+       /// <param name="sender"></param>
+       /// <param name="e"></param>
+        private void lblnkFrameTranc_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             if ((panelCtrl.Controls[0] as UCFrameParameter) != null) return;
             panelCtrl.Controls.Clear();

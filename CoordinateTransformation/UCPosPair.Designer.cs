@@ -45,6 +45,7 @@
             this.grpAdd = new DevExpress.XtraEditors.GroupControl();
             this.btnedtSou = new DevExpress.XtraEditors.ButtonEdit();
             this.labelControl1 = new DevExpress.XtraEditors.LabelControl();
+            this.hyperlinkLabelControl1 = new DevExpress.XtraEditors.HyperlinkLabelControl();
             ((System.ComponentModel.ISupportInitialize)(this.chkHavZ.Properties)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.groupControl1)).BeginInit();
             this.groupControl1.SuspendLayout();
@@ -192,6 +193,7 @@
             // 
             // grpAdd
             // 
+            this.grpAdd.Controls.Add(this.hyperlinkLabelControl1);
             this.grpAdd.Controls.Add(this.chkHavZ);
             this.grpAdd.Controls.Add(this.chkBegin2);
             this.grpAdd.Controls.Add(this.btnedtSou);
@@ -224,6 +226,16 @@
             this.labelControl1.Size = new System.Drawing.Size(84, 14);
             this.labelControl1.TabIndex = 0;
             this.labelControl1.Text = "坐标对值文件：";
+            // 
+            // hyperlinkLabelControl1
+            // 
+            this.hyperlinkLabelControl1.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.hyperlinkLabelControl1.Location = new System.Drawing.Point(460, 4);
+            this.hyperlinkLabelControl1.Name = "hyperlinkLabelControl1";
+            this.hyperlinkLabelControl1.Size = new System.Drawing.Size(48, 14);
+            this.hyperlinkLabelControl1.TabIndex = 3;
+            this.hyperlinkLabelControl1.Text = "示例文件";
+            this.hyperlinkLabelControl1.Click += new System.EventHandler(this.hyperlinkLabelControl1_Click);
             // 
             // UCPosPair
             // 
@@ -265,5 +277,6 @@
         private DevExpress.XtraEditors.GroupControl grpAdd;
         private DevExpress.XtraEditors.ButtonEdit btnedtSou;
         private DevExpress.XtraEditors.LabelControl labelControl1;
+        private DevExpress.XtraEditors.HyperlinkLabelControl hyperlinkLabelControl1;
     }
 }

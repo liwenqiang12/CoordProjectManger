@@ -307,6 +307,12 @@
     <Compile Include="FormCoordPara.Designer.cs">
       <DependentUpon>FormCoordPara.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormExample.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormExample.Designer.cs">
+      <DependentUpon>FormExample.cs</DependentUpon>
+    </Compile>
     <Compile Include="FrmCalcPara.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -376,6 +382,7 @@
     <Compile Include="UCFrameParameter.Designer.cs">
       <DependentUpon>UCFrameParameter.cs</DependentUpon>
     </Compile>
+    <Compile Include="UtilArcgisClass.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
@@ -384,6 +391,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FormCoordPara.resx">
       <DependentUpon>FormCoordPara.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormExample.resx">
+      <DependentUpon>FormExample.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FrmCalcPara.resx">
       <DependentUpon>FrmCalcPara.cs</DependentUpon>

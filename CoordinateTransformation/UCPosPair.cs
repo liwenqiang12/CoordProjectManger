@@ -226,5 +226,15 @@ namespace CoordinateTransformation
         {
             return this.treePosPair.DataSource as DataTable;
         }
+
+        private void hyperlinkLabelControl1_Click(object sender, EventArgs e)
+        {
+            string templateFolder = System.IO.Path.Combine(Application.StartupPath, "config");
+            string filename = System.IO.Path.Combine(templateFolder, "对应参数示例.txt");
+            string txt = System.IO.File.ReadAllText(filename,Encoding.Default);
+            FormExample frm = new FormExample();
+            frm.SetTxt(txt);
+            frm.Show();
+        }
     }
 }

@@ -28,6 +28,20 @@ namespace CoordinateTransformation
             frmPrj.OnPrjSelected += new PrjSelectedHandler(frmPrj_OnPrjSelected);
             frmPrj.ShowDialog();
         }
+        private void ShowMidProj(bool isShow)
+        {
+            txtMidProj.Visible = isShow;
+            lblMidProj.Visible = isShow;
+            lblTransPara2.Visible = isShow;
+            cmbTransPara2.Visible = isShow;
+        }
+        private void ClearMidProj()
+        {
+            txtMidProj.Text = "";
+            txtMidProj.Tag = null;
+            cmbTransPara2.EditValue = null;
+            cmbTransPara2.Text = "";
+        }
         void frmPrj_OnPrjSelected(object Project)
         {
             //throw new NotImplementedException();
@@ -35,6 +49,8 @@ namespace CoordinateTransformation
             //btnEditCountry.Tag = Project;
             btnEditTarPrj.EditValue = null;
             btnEditTarPrj.Text = "";
+            ShowMidProj(false);
+            ClearMidProj();
             //btnEditSou.Text = (Project as CoordProjClass).NAME;
         }
 
@@ -47,13 +63,58 @@ namespace CoordinateTransformation
         }
         void frmPrj_OnPrjSelected1(object Project)
         {
+            ClearMidProj();
+            ShowMidProj(false);
             //throw new NotImplementedException();
             btnEditTarPrj.EditValue = Project;
             this.cmbTransPara.Properties.Items.Clear();
+            this.cmbTransPara2.Properties.Items.Clear();
             DataTable coorParaTable = AccessHelper.ExecuteDataTable(string.Format("select * from CoordinatePara where ( SOU_WKID ={0} and TAR_WKID = {1} ) OR ( SOU_WKID ={1} and TAR_WKID = {0} )",
                (btnEditSouPrj.EditValue as CoordProjClass).WKID, (btnEditTarPrj.EditValue as CoordProjClass).WKID), null);
-            if (coorParaTable == null || coorParaTable.Rows.Count == 0)
-                return;
+            if (coorParaTable == null || coorParaTable.Rows.Count == 0)//没有直接转换关系，则尝试中转
+            {
+                coorParaTable = AccessHelper.ExecuteDataTable(string.Format("select sou_wkid , tar_wkid from CoordinatePara where ( SOU_WKID ={0}  ) OR ( TAR_WKID = {0} )",
+               (btnEditSouPrj.EditValue as CoordProjClass).WKID), null);
+                if (coorParaTable == null || coorParaTable.Rows.Count == 0)
+                    return;
+                string wkids = string.Empty;
+                for (int i = 0; i < coorParaTable.Rows.Count; i++)
+                {
+                    if ((btnEditSouPrj.EditValue as CoordProjClass).WKID.ToString() == coorParaTable.Rows[i]["sou_wkid"].ToString())
+                    {
+                        wkids += coorParaTable.Rows[i]["tar_wkid"].ToString() + ",";
+                    }
+                    else
+                        wkids += coorParaTable.Rows[i]["sou_wkid"].ToString() + ",";
+                }
+                wkids = wkids.Trim(',');
+                coorParaTable = AccessHelper.ExecuteDataTable(string.Format("select sou_wkid , tar_wkid from CoordinatePara where ( SOU_WKID in ({0} ) and TAR_WKID = {1} ) OR ( SOU_WKID ={1} and TAR_WKID in ( {0} ) )",
+                 wkids, (btnEditTarPrj.EditValue as CoordProjClass).WKID), null);
+                if (coorParaTable == null || coorParaTable.Rows.Count == 0)
+                    return;
+                string midProjid = coorParaTable.Rows[0]["sou_wkid"].ToString() == (btnEditTarPrj.EditValue as CoordProjClass).WKID.ToString() ?
+                    coorParaTable.Rows[0]["tar_wkid"].ToString() : coorParaTable.Rows[0]["sou_wkid"].ToString();
+                //获取第一条，作为中转坐标系统
+                DataTable midProjdt = CommonClass.GetCoorSystemTable("wkid = " + midProjid);
+                CoordProjClass souprojClass = new CoordProjClass();
+                souprojClass.NAME = midProjdt.Rows[0]["NAME"].ToString();
+                souprojClass.WKID = Convert.ToInt32(midProjid);
+                souprojClass.DEFINITION = midProjdt.Rows[0]["DEFINITION"].ToString();
+                this.txtMidProj.Text = souprojClass.NAME;
+                this.txtMidProj.Tag = souprojClass;
+
+                coorParaTable = AccessHelper.ExecuteDataTable(string.Format("select * from CoordinatePara where ( SOU_WKID ={0} and TAR_WKID = {1} ) OR ( SOU_WKID ={1} and TAR_WKID = {0} )",
+               (btnEditSouPrj.EditValue as CoordProjClass).WKID, midProjid), null);
+                DataTable coorParaTable2 = AccessHelper.ExecuteDataTable(string.Format("select * from CoordinatePara where ( SOU_WKID ={0} and TAR_WKID = {1} ) OR ( SOU_WKID ={1} and TAR_WKID = {0} )",
+               (btnEditTarPrj.EditValue as CoordProjClass).WKID, midProjid), null);
+
+                for (int i = 0; i < coorParaTable2.Rows.Count; i++)
+                {
+                    this.cmbTransPara2.Properties.Items.Add(new CoordTrancParamClass(coorParaTable2.Rows[i]));
+
+                }
+                ShowMidProj(true);
+            }
             for (int i = 0; i < coorParaTable.Rows.Count; i++)
             {
                 this.cmbTransPara.Properties.Items.Add(new CoordTrancParamClass( coorParaTable.Rows[i] ));
@@ -115,7 +176,15 @@ namespace CoordinateTransformation
             CoordTrancParamClass paramClass = this.cmbTransPara.SelectedItem as CoordTrancParamClass;
             if (paramClass.Defined)
             {
-                if (!CreateTranseFile(paramClass, (this.btnEditSouPrj.EditValue as CoordProjClass).DEFINITION, (this.btnEditTarPrj.EditValue as CoordProjClass).DEFINITION))
+                if (!CreateTranseFile(paramClass, (this.btnEditSouPrj.EditValue as CoordProjClass).DEFINITION,this.txtMidProj.Visible?
+                    (this.txtMidProj.Tag as CoordProjClass).DEFINITION:
+                    (this.btnEditTarPrj.EditValue as CoordProjClass).DEFINITION))
+                    return;
+            }
+            CoordTrancParamClass paramClass2 = this.cmbTransPara2.SelectedItem as CoordTrancParamClass;
+            if (this.txtMidProj.Visible && paramClass2.Defined)
+            {
+                if (!CreateTranseFile(paramClass2, (this.txtMidProj.Tag as CoordProjClass).DEFINITION, (this.btnEditTarPrj.EditValue as CoordProjClass).DEFINITION))
                     return;
             }
 
@@ -129,14 +198,28 @@ namespace CoordinateTransformation
                 {
                     string tempshpfile = System.IO.Path.Combine(Application.StartupPath, "lsdata", DateTime.Now.ToString("yyMMddHHmmss") + ".shp");
                     IFeatureClass tempFeatureclass = CreateShapeFile(tempshpfile, (this.btnEditSouPrj.EditValue as CoordProjClass).DEFINITION);
-                    InsertPointToShape(tempFeatureclass, filename, false, false);
+                    InsertPointToShape(tempFeatureclass, filename, true, true);
                     ComReleaser.ReleaseCOMObject(tempFeatureclass);
                     string tempPrjshpfile = System.IO.Path.Combine(Application.StartupPath, "lsdata", DateTime.Now.ToString("yyMMddHHmmss") + "_prj.shp");
-                    TrancShape(tempshpfile, tempPrjshpfile, paramClass, (this.btnEditSouPrj.EditValue as CoordProjClass).DEFINITION, (this.btnEditTarPrj.EditValue as CoordProjClass).DEFINITION);
+                    if (this.txtMidProj.Visible)
+                    {
+                        string midprjfile = System.IO.Path.Combine(Application.StartupPath, "lsdata", DateTime.Now.ToString("yyMMddHHmmss") + "_midprj.shp");
+                        TrancShape(tempshpfile, midprjfile, paramClass, (this.btnEditSouPrj.EditValue as CoordProjClass).DEFINITION, (this.txtMidProj.Tag as CoordProjClass).DEFINITION);
+                        TrancShape(midprjfile, tempPrjshpfile, paramClass2, (this.txtMidProj.Tag as CoordProjClass).DEFINITION, (this.btnEditTarPrj.EditValue as CoordProjClass).DEFINITION);
+                    }
+                    else
+                         TrancShape(tempshpfile, tempPrjshpfile, paramClass, (this.btnEditSouPrj.EditValue as CoordProjClass).DEFINITION, (this.btnEditTarPrj.EditValue as CoordProjClass).DEFINITION);
                     OutputTxt(tempPrjshpfile, tarFilename);
                 }
                 else
                 {
+                    if (this.txtMidProj.Visible)
+                    {
+                        string midprjfile = System.IO.Path.Combine(Application.StartupPath, "lsdata", DateTime.Now.ToString("yyMMddHHmmss") + "_midprj.shp");
+                        TrancShape(filename, midprjfile, paramClass, (this.btnEditSouPrj.EditValue as CoordProjClass).DEFINITION, (this.txtMidProj.Tag as CoordProjClass).DEFINITION);
+                        TrancShape(midprjfile, tarFilename, paramClass2, (this.txtMidProj.Tag as CoordProjClass).DEFINITION, (this.btnEditTarPrj.EditValue as CoordProjClass).DEFINITION);
+                    }
+                    else
                     TrancShape(filename, tarFilename, paramClass, (this.btnEditSouPrj.EditValue as CoordProjClass).DEFINITION, (this.btnEditTarPrj.EditValue as CoordProjClass).DEFINITION);
                     
                 }
@@ -147,26 +230,36 @@ namespace CoordinateTransformation
         }
         private bool TrancShape(string sourceShape, string tarShape, CoordTrancParamClass paramClass, string sourcProj, string tarProj)
         {
-            string lsDir = System.IO.Path.Combine(Application.StartupPath, "lsdata");
-            if (!System.IO.Directory.Exists(lsDir))
-                Directory.CreateDirectory(lsDir);
-            string pyFile = System.IO.Path.Combine(lsDir, "坐标转化方法.py");
-            File.Copy("坐标转化方法.py", pyFile, true);
-            string pyStr = File.ReadAllText(pyFile);
-            pyStr = pyStr.Replace("@转换名称", paramClass.CoorTranName);
-            pyStr = pyStr.Replace("@源坐标系", sourcProj.Replace("\"", "'"));
-            pyStr = pyStr.Replace("@目标坐标系", tarProj.Replace("\"", "'"));
-            pyStr = pyStr.Replace("@源数据", sourceShape);
-            pyStr = pyStr.Replace("@投影后数据", tarShape);
-            File.WriteAllText(pyFile, pyStr, Encoding.Default);
             string errLog;
-            if (!GoPythonProcess(pyFile, out errLog))
+            if (!UtilArcgisClass.GPGeoTransformation(sourceShape, sourcProj.Replace("\"", "'"),
+                 tarShape, tarProj.Replace("\"", "'"), paramClass.CoorTranName, out errLog))
             {
                 MessageBox.Show(errLog);
                 return false;
             }
             return true;
+        
+            //string lsDir = System.IO.Path.Combine(Application.StartupPath, "lsdata");
+            //if (!System.IO.Directory.Exists(lsDir))
+            //    Directory.CreateDirectory(lsDir);
+            //string pyFile = System.IO.Path.Combine(lsDir, "坐标转化方法.py");
+            //File.Copy("坐标转化方法.py", pyFile, true);
+            //string pyStr = File.ReadAllText(pyFile);
+            //pyStr = pyStr.Replace("@转换名称", paramClass.CoorTranName);
+            //pyStr = pyStr.Replace("@源坐标系", sourcProj.Replace("\"", "'"));
+            //pyStr = pyStr.Replace("@目标坐标系", tarProj.Replace("\"", "'"));
+            //pyStr = pyStr.Replace("@源数据", sourceShape);
+            //pyStr = pyStr.Replace("@投影后数据", tarShape);
+            //File.WriteAllText(pyFile, pyStr, Encoding.Default);
+          
+            //if (!GoPythonProcess(pyFile, out errLog))
+            //{
+            //    MessageBox.Show(errLog);
+            //    return false;
+            //}
+            //return true;
         }
+        
         private void OutputTxt(string shpfile , string txtPath)
         {
             FileInfo finfo = new FileInfo(shpfile);
@@ -268,17 +361,25 @@ namespace CoordinateTransformation
         }  
         private bool CreateTranseFile(CoordTrancParamClass paramClass , string sourcProj , string tarProj )
         {
-            
-            string lsDir = System.IO.Path.Combine(Application.StartupPath, "lsdata");
-            if (!System.IO.Directory.Exists(lsDir))
-                Directory.CreateDirectory(lsDir);
-            string pyFile = System.IO.Path.Combine( lsDir, "自定义转换参数.py") ;
-            File.Copy("自定义转换参数.py", pyFile, true);
-            string pyStr = File.ReadAllText(pyFile);
-            pyStr = pyStr.Replace("@转换名称", paramClass.CoorTranName);
-            pyStr = pyStr.Replace("@输入坐标系", sourcProj.Replace("\"","'"));
-            pyStr = pyStr.Replace("@输出地理坐标系", tarProj.Replace("\"", "'"));
-
+            string trancFile = System.IO.Path.Combine( Application.StartupPath  , "config" , "trancFilePath.txt" );
+            string TrancFolder =string.Empty ; // @"C:\Users\Administrator\AppData\Roaming\Esri\Desktop10.2\ArcToolbox\CustomTransformations" ;
+            if( System.IO.File.Exists( trancFile ))
+            {
+                 string temp = System.IO.File.ReadAllText( trancFile );
+                if( System.IO.Directory.Exists( temp ))
+                    TrancFolder = temp ;
+            }
+            if( !string.IsNullOrEmpty( TrancFolder ))//删除已有的转换
+            {
+                if( System.IO.File.Exists( System.IO.Path.Combine( TrancFolder , paramClass.CoorTranName + ".gtf")))
+                {
+                    try
+                    {
+                        System.IO.File.Delete( System.IO.Path.Combine( TrancFolder , paramClass.CoorTranName + ".gtf") );
+                    }
+                    catch{}
+                }
+            }
             double X_Axis = paramClass.DX, Y_Axis = paramClass.DY, Z_Axis = paramClass.DZ;
             double xr = paramClass.RX, yr = paramClass.RY, zr = paramClass.RZ, scale = paramClass.DS;
             string paramStr = string.Empty ;
@@ -287,16 +388,22 @@ namespace CoordinateTransformation
             else
                 paramStr = string.Format("GEOGTRAN[METHOD['Position_Vector'],PARAMETER['X_Axis_Translation',{0}],PARAMETER['Y_Axis_Translation',{1}],PARAMETER['Z_Axis_Translation',{2}],PARAMETER['X_Axis_Rotation',{3}],PARAMETER['Y_Axis_Rotation',{4}],PARAMETER['Z_Axis_Rotation',{5}],PARAMETER['Scale_Difference',{6}]]"
                 , X_Axis, Y_Axis, Z_Axis, xr, yr, zr, scale);
-            pyStr = pyStr.Replace("@转换方式", paramStr);
-            File.WriteAllText(pyFile, pyStr, Encoding.Default);
+            //pyStr = pyStr.Replace("@转换方式", paramStr);
             string errLog;
-            if (!GoPythonProcess(pyFile, out errLog))
+            if(!UtilArcgisClass.GPCreateCustomGeoTransformation( paramClass.CoorTranName , sourcProj.Replace("\"","'") ,
+                tarProj.Replace("\"", "'") ,paramStr , out errLog ) )
             {
-                if (!errLog.Contains("ERROR 000258"))
+                 if (errLog.Contains("ERROR 000258"))//已存在，则记录gtf的存储位置，然后重新创建一次
                 {
+                   string gtfFile = errLog.Substring( errLog.IndexOf(": 输出 " ) + 5 , errLog.IndexOf(" 已存在" ) );
+                   System.IO.File.WriteAllText( trancFile , new System.IO.FileInfo( gtfFile.Trim()).DirectoryName  );
+                     return  CreateTranseFile( paramClass ,  sourcProj ,  tarProj );
+                }
+                else
+                 {
                     MessageBox.Show(errLog);
                     return false;
-                }
+                 }
             }
             return true;
         }
@@ -331,6 +438,31 @@ namespace CoordinateTransformation
             }
 
             return false;
+        }
+
+        private void delBtn_Click(object sender, EventArgs e)
+        {
+           
+            gridView1.DeleteSelectedRows();
+        }
+
+        private void radioGroup1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (radioGroup1.SelectedIndex == 0)
+                this.lnkShili.Visible = false;
+            else
+                this.lnkShili.Visible = true;
+        }
+
+        private void lnkShili_Click(object sender, EventArgs e)
+        {
+
+            string templateFolder = System.IO.Path.Combine( Application.StartupPath, "config");
+                string filename = System.IO.Path.Combine(templateFolder, "源坐标示例.txt");
+                string txt = System.IO.File.ReadAllText(filename);
+                FormExample frm = new FormExample();
+                frm.SetTxt(txt);
+                frm.Show();
         }
     }
 }

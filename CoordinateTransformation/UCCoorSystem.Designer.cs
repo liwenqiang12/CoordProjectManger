@@ -56,10 +56,11 @@
             this.treeList1.OptionsMenu.EnableColumnMenu = false;
             this.treeList1.OptionsView.ShowColumns = false;
             this.treeList1.SelectImageList = this.imageList1;
-            this.treeList1.Size = new System.Drawing.Size(245, 447);
+            this.treeList1.Size = new System.Drawing.Size(358, 197);
             this.treeList1.TabIndex = 0;
             this.treeList1.FocusedNodeChanged += new DevExpress.XtraTreeList.FocusedNodeChangedEventHandler(this.treeList1_FocusedNodeChanged);
             this.treeList1.CustomDrawNodeImages += new DevExpress.XtraTreeList.CustomDrawNodeImagesEventHandler(this.treeList1_CustomDrawNodeImages);
+            this.treeList1.FilterNode += new DevExpress.XtraTreeList.FilterNodeEventHandler(this.treeList1_FilterNode);
             // 
             // imageList1
             // 
@@ -72,13 +73,14 @@
             // splitContainerControl1
             // 
             this.splitContainerControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainerControl1.Horizontal = false;
             this.splitContainerControl1.Location = new System.Drawing.Point(0, 0);
             this.splitContainerControl1.Name = "splitContainerControl1";
-            this.splitContainerControl1.Panel1.Controls.Add(this.treeList1);
+            this.splitContainerControl1.Panel1.Controls.Add(this.coorInfoCtrl);
             this.splitContainerControl1.Panel1.Text = "Panel1";
-            this.splitContainerControl1.Panel2.Controls.Add(this.coorInfoCtrl);
+            this.splitContainerControl1.Panel2.Controls.Add(this.treeList1);
             this.splitContainerControl1.Panel2.Text = "Panel2";
-            this.splitContainerControl1.Size = new System.Drawing.Size(653, 447);
+            this.splitContainerControl1.Size = new System.Drawing.Size(358, 447);
             this.splitContainerControl1.SplitterPosition = 245;
             this.splitContainerControl1.TabIndex = 1;
             this.splitContainerControl1.Text = "splitContainerControl1";
@@ -98,8 +100,9 @@
             this.coorInfoCtrl.Options.Export.PlainText.ExportFinalParagraphMark = DevExpress.XtraRichEdit.Export.PlainText.ExportFinalParagraphMark.Never;
             this.coorInfoCtrl.Options.Fields.UpdateFieldsInTextBoxes = false;
             this.coorInfoCtrl.Options.VerticalScrollbar.Visibility = DevExpress.XtraRichEdit.RichEditScrollbarVisibility.Hidden;
-            this.coorInfoCtrl.Size = new System.Drawing.Size(403, 447);
+            this.coorInfoCtrl.Size = new System.Drawing.Size(358, 245);
             this.coorInfoCtrl.TabIndex = 0;
+            this.coorInfoCtrl.Click += new System.EventHandler(this.coorInfoCtrl_Click);
             // 
             // UCCoorSystem
             // 
@@ -107,7 +110,8 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.splitContainerControl1);
             this.Name = "UCCoorSystem";
-            this.Size = new System.Drawing.Size(653, 447);
+            this.Size = new System.Drawing.Size(358, 447);
+            this.Load += new System.EventHandler(this.UCCoorSystem_Load);
             ((System.ComponentModel.ISupportInitialize)(this.treeList1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainerControl1)).EndInit();
             this.splitContainerControl1.ResumeLayout(false);
